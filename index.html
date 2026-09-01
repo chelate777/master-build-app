@@ -125,6 +125,17 @@ canvas{width:100%;height:180px;background:#fff;border-radius:14px}
     </div>
     <div class="card full"><canvas id="chart" width="680" height="180"></canvas></div>
     <div class="card full">
+      <div class="title">⏱ Рабочее время</div>
+      <div class="sub">Сотрудники, Clock In / Clock Out и автоматический Labor Cost</div>
+      <div class="actions" style="margin-top:12px">
+        <button class="action" onclick="openForm('employee')">+ Worker</button>
+        <button class="action" onclick="openForm('clockin')">Clock In</button>
+      </div>
+      <div id="activeClocks" class="list" style="margin-top:12px;box-shadow:none;padding:0"></div>
+      <div style="margin-top:12px" class="title">Последние смены</div>
+      <div id="timeEntriesList" class="list" style="margin-top:8px;box-shadow:none;padding:0"></div>
+    </div>
+    <div class="card full">
       <button class="secondary" onclick="openForm('settings')">Настройки бизнеса и резервов</button>
       <button class="secondary" onclick="exportJSON()">Экспорт backup JSON</button>
       <button class="secondary" onclick="exportCSV()">Экспорт CSV</button>
@@ -150,12 +161,12 @@ canvas{width:100%;height:180px;background:#fff;border-radius:14px}
 
 <script>
 const KEY='masterbuild_pwa_ultimate_v1';
-const emptyDB={projects:[],expenses:[],payments:[],labor:[],mileage:[],clients:[],subs:[],estimates:[],invoices:[],receipts:[],settings:{
+const emptyDB={projects:[],expenses:[],payments:[],labor:[],mileage:[],clients:[],subs:[],estimates:[],invoices:[],receipts:[],employees:[],timeEntries:[],settings:{
  company:'Master Build',phone:'',email:'',address:'',boReserve:0.015,federalReserve:0.20,liReserve:0.05,overheadReserve:0.10,mileageRate:0.70,salesTax:0
 }};
 let db=loadDB(), projectFilter='all', financeTab='expenses';
 
-function loadDB(){try{return Object.assign(structuredClone(emptyDB),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return structuredClone(emptyDB)}}
+function loadDB(){try{let raw=JSON.parse(localStorage.getItem(KEY)||'{}'),out=Object.assign(structuredClone(emptyDB),raw);['projects','expenses','payments','labor','mileage','clients','subs','estimates','invoices','receipts','employees','timeEntries'].forEach(k=>{if(!Array.isArray(out[k]))out[k]=[]});out.settings=Object.assign({},emptyDB.settings,raw.settings||{});return out}catch(e){return structuredClone(emptyDB)}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
 function money(v){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(v||0))}
 function pct(v){return `${(Number(v||0)*100).toFixed(1)}%`}
@@ -180,19 +191,22 @@ function totals(){
 }
 function showScreen(id,btn){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderAll()}
 function closeModal(){modal.classList.remove('open')}
-function openQuick(){formTitle.textContent='Быстро добавить';formBody.innerHTML=`<button class="primary" onclick="openForm('project')">Новый проект</button><button class="secondary" onclick="openForm('expense')">Новый расход</button><button class="secondary" onclick="openForm('payment')">Новый платёж</button><button class="secondary" onclick="openForm('receipt')">Сфотографировать чек</button><button class="secondary" onclick="openForm('invoice')">Новый Invoice</button><button class="secondary" onclick="openForm('estimate')">Новый Estimate</button>`;modal.classList.add('open')}
+function openQuick(){formTitle.textContent='Быстро добавить';formBody.innerHTML=`<button class="primary" onclick="openForm('project')">Новый проект</button><button class="secondary" onclick="openForm('expense')">Новый расход</button><button class="secondary" onclick="openForm('payment')">Новый платёж</button><button class="secondary" onclick="openForm('receipt')">Сфотографировать чек</button><button class="secondary" onclick="openForm('invoice')">Новый Invoice</button><button class="secondary" onclick="openForm('estimate')">Новый Estimate</button><button class="secondary" onclick="openForm('clockin')">⏱ Clock In</button>`;modal.classList.add('open')}
 
 function projectOptions(selected=''){return `<option value="">Без проекта</option>`+db.projects.map(p=>`<option value="${p.id}" ${selected===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}
+function employeeOptions(selected=''){return db.employees.map(e=>`<option value="${e.id}" ${selected===e.id?'selected':''}>${esc(e.name)}</option>`).join('')}
 function openForm(type,arg=''){
  modal.classList.add('open');
  if(type==='project'){
-  formTitle.textContent='Новый проект';formBody.innerHTML=`
-  <label>Название / адрес</label><input id="pName" placeholder="Smith Siding">
-  <label>Клиент</label><input id="pClient">
-  <label>Адрес</label><input id="pAddress">
-  <div class="row"><div><label>Contract</label><input id="pContract" type="number" inputmode="decimal"></div><div><label>Change Orders</label><input id="pCO" type="number" inputmode="decimal"></div></div>
-  <label>Статус</label><select id="pStatus"><option value="active">In Progress</option><option value="lead">Lead</option><option value="quoted">Quoted</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
-  <button class="primary" onclick="addProject()">Сохранить</button><button class="secondary" onclick="closeModal()">Отмена</button>`;
+  let p=db.projects.find(x=>x.id===arg);
+  formTitle.textContent=p?'Изменить проект':'Новый проект';formBody.innerHTML=`
+  <input id="pId" type="hidden" value="${esc(p?.id||'')}">
+  <label>Название / адрес</label><input id="pName" placeholder="Smith Siding" value="${esc(p?.name||'')}">
+  <label>Клиент</label><input id="pClient" value="${esc(p?.client||'')}">
+  <label>Адрес</label><input id="pAddress" value="${esc(p?.address||'')}">
+  <div class="row"><div><label>Contract</label><input id="pContract" type="number" inputmode="decimal" value="${p?.contract??''}"></div><div><label>Change Orders</label><input id="pCO" type="number" inputmode="decimal" value="${p?.changeOrders??''}"></div></div>
+  <label>Статус</label><select id="pStatus"><option value="active" ${p?.status==='active'?'selected':''}>In Progress</option><option value="lead" ${p?.status==='lead'?'selected':''}>Lead</option><option value="quoted" ${p?.status==='quoted'?'selected':''}>Quoted</option><option value="completed" ${p?.status==='completed'?'selected':''}>Completed</option><option value="cancelled" ${p?.status==='cancelled'?'selected':''}>Cancelled</option></select>
+  <button class="primary" onclick="saveProject()">Сохранить</button>${p?`<button class="danger" onclick="deleteProject('${p.id}')">Удалить проект</button>`:''}<button class="secondary" onclick="closeModal()">Отмена</button>`;
  } else if(type==='expense'){
   formTitle.textContent='Новый расход';formBody.innerHTML=`
   <label>Проект</label><select id="eProject">${projectOptions(arg)}</select>
@@ -247,6 +261,18 @@ function openForm(type,arg=''){
   formTitle.textContent='Новый клиент';formBody.innerHTML=`<label>Имя</label><input id="cName"><label>Phone</label><input id="cPhone"><label>Email</label><input id="cEmail"><label>Address</label><input id="cAddress"><button class="primary" onclick="addClient()">Сохранить клиента</button>`;
  } else if(type==='sub'){
   formTitle.textContent='Subcontractor';formBody.innerHTML=`<label>Name</label><input id="sName"><label>Company</label><input id="sCompany"><label>Email</label><input id="sEmail"><label>Phone</label><input id="sPhone"><label><input id="sW9" type="checkbox"> W-9 received</label><br><label><input id="sIns" type="checkbox"> Insurance on file</label><button class="primary" onclick="addSub()">Сохранить</button>`;
+ } else if(type==='employee'){
+  formTitle.textContent='Новый Worker';formBody.innerHTML=`
+  <label>Имя</label><input id="empName" placeholder="Worker name">
+  <label>Hourly rate</label><input id="empRate" type="number" inputmode="decimal" placeholder="25">
+  <button class="primary" onclick="addEmployee()">Сохранить Worker</button><button class="secondary" onclick="closeModal()">Отмена</button>`;
+ } else if(type==='clockin'){
+  if(!db.employees.length){formTitle.textContent='Clock In';formBody.innerHTML=`<div class="notice">Сначала добавь сотрудника.</div><button class="primary" onclick="openForm('employee')">+ Добавить Worker</button>`}
+  else {formTitle.textContent='Clock In';formBody.innerHTML=`
+  <label>Worker</label><select id="clockEmployee" onchange="syncClockRate()">${employeeOptions()}</select>
+  <label>Проект</label><select id="clockProject">${projectOptions()}</select>
+  <label>Hourly rate</label><input id="clockRate" type="number" inputmode="decimal">
+  <button class="primary" onclick="clockIn()">Начать смену</button><button class="secondary" onclick="closeModal()">Отмена</button>`;setTimeout(syncClockRate,0)}
  } else if(type==='settings'){
   const s=db.settings;formTitle.textContent='Business Settings';formBody.innerHTML=`
   <label>Company</label><input id="setCompany" value="${esc(s.company)}"><label>Phone</label><input id="setPhone" value="${esc(s.phone)}"><label>Email</label><input id="setEmail" value="${esc(s.email)}"><label>Address</label><input id="setAddress" value="${esc(s.address)}">
@@ -257,7 +283,13 @@ function openForm(type,arg=''){
  }
 }
 
-function addProject(){db.projects.push({id:uid('p'),name:pName.value.trim(),client:pClient.value.trim(),address:pAddress.value.trim(),contract:+pContract.value||0,changeOrders:+pCO.value||0,status:pStatus.value,date:new Date().toISOString()});closeModal();save()}
+function saveProject(){let id=pId.value.trim(),data={name:pName.value.trim(),client:pClient.value.trim(),address:pAddress.value.trim(),contract:+pContract.value||0,changeOrders:+pCO.value||0,status:pStatus.value};if(id){let p=db.projects.find(x=>x.id===id);if(p)Object.assign(p,data)}else db.projects.push({id:uid('p'),...data,date:new Date().toISOString()});closeModal();save()}
+function deleteProject(id){let p=db.projects.find(x=>x.id===id);if(!p)return;let linked=db.expenses.filter(x=>x.projectId===id).length+db.payments.filter(x=>x.projectId===id).length+db.labor.filter(x=>x.projectId===id).length+db.mileage.filter(x=>x.projectId===id).length;let msg=`Удалить проект "${p.name}"?`;if(linked)msg+=`\n\nСвязанные финансовые записи (${linked}) будут сохранены в истории без привязки к проекту.`;if(!confirm(msg))return;['expenses','payments','labor','mileage','receipts','timeEntries'].forEach(k=>db[k].forEach(x=>{if(x.projectId===id)x.projectId=''}));db.projects=db.projects.filter(x=>x.id!==id);closeModal();save()}
+function addEmployee(){let name=empName.value.trim();if(!name){alert('Введите имя сотрудника');return}db.employees.push({id:uid('emp'),name,rate:+empRate.value||0,date:new Date().toISOString()});closeModal();save()}
+function syncClockRate(){let el=document.getElementById('clockEmployee'),rate=document.getElementById('clockRate');if(!el||!rate)return;let e=db.employees.find(x=>x.id===el.value);rate.value=e?.rate||0}
+function clockIn(){let emp=db.employees.find(x=>x.id===clockEmployee.value),p=db.projects.find(x=>x.id===clockProject.value);if(!emp)return;let already=db.timeEntries.find(x=>x.employeeId===emp.id&&!x.end);if(already){alert(emp.name+' уже Clocked In');return}db.timeEntries.push({id:uid('t'),employeeId:emp.id,employeeName:emp.name,projectId:clockProject.value,projectName:p?.name||'',rate:+clockRate.value||emp.rate||0,start:new Date().toISOString(),end:null,hours:0});closeModal();save()}
+function clockOut(id){let t=db.timeEntries.find(x=>x.id===id);if(!t||t.end)return;let end=new Date(),start=new Date(t.start),hours=Math.max(0,(end-start)/3600000);t.end=end.toISOString();t.hours=Math.round(hours*100)/100;db.labor.push({id:uid('l'),date:t.end,projectId:t.projectId,projectName:t.projectName,worker:t.employeeName,hours:t.hours,rate:+t.rate||0,compRate:0,timeEntryId:t.id});save()}
+function deleteEmployee(id){if(db.timeEntries.some(x=>x.employeeId===id&&!x.end)){alert('Сначала сделай Clock Out этому сотруднику.');return}let e=db.employees.find(x=>x.id===id);if(e&&confirm(`Удалить Worker "${e.name}"?`)){db.employees=db.employees.filter(x=>x.id!==id);save()}}
 function addExpense(){let p=db.projects.find(x=>x.id===eProject.value);db.expenses.push({id:uid('e'),date:new Date().toISOString(),projectId:eProject.value,projectName:p?.name||'',vendor:eVendor.value.trim(),category:eCat.value,desc:eDesc.value.trim(),amount:+eAmount.value||0,receipt:eReceipt.value.trim()});closeModal();save()}
 function addPayment(){let p=db.projects.find(x=>x.id===payProject.value);db.payments.push({id:uid('pay'),date:new Date().toISOString(),projectId:payProject.value,projectName:p?.name||'',client:p?.client||'',amount:+payAmount.value||0,method:payMethod.value,ref:payRef.value.trim()});closeModal();save()}
 function addLabor(){let p=db.projects.find(x=>x.id===lProject.value);db.labor.push({id:uid('l'),date:new Date().toISOString(),projectId:lProject.value,projectName:p?.name||'',worker:lWorker.value.trim(),hours:+lHours.value||0,rate:+lRate.value||0,compRate:+lComp.value||0});closeModal();save()}
@@ -277,7 +309,8 @@ function renderProjects(){
  if(q)list=list.filter(p=>[p.name,p.client,p.address].some(v=>(v||'').toLowerCase().includes(q)));
  projectsList.innerHTML=list.length?list.map(p=>projectHTML(p,true)).join(''):'<div class="item"><div class="sub">Пока нет проектов</div></div>';
 }
-function projectHTML(p,buttons=false){let m=projectMetrics(p);let cls=m.balance<=0?'badge':m.paid>0?'badge warn':'badge bad';let txt=m.balance<=0?'Оплачено':m.paid>0?'Частично':'Не оплачено';return `<div class="item"><div><div class="title">${esc(p.name)}</div><div class="sub">${esc(p.client||p.address||'')} • Margin ${pct(m.margin)} • Cost ${money(m.cost)}</div>${buttons?`<div class="sub"><a href="#" onclick="openForm('expense','${p.id}')">+ расход</a> · <a href="#" onclick="openForm('payment','${p.id}')">+ платёж</a> · <a href="#" onclick="openForm('invoice','${p.id}')">invoice</a></div>`:''}</div><div class="right"><b>${money(m.final)}</b><div class="${cls}">${txt}</div></div></div>`}
+function projectHTML(p,buttons=false){let m=projectMetrics(p);let cls=m.balance<=0?'badge':m.paid>0?'badge warn':'badge bad';let txt=m.balance<=0?'Оплачено':m.paid>0?'Частично':'Не оплачено';return `<div class="item"><div><div class="title">${esc(p.name)}</div><div class="sub">${esc(p.client||p.address||'')} • Margin ${pct(m.margin)} • Cost ${money(m.cost)}</div>${buttons?`<div class="sub"><a href="#" onclick="openForm('expense','${p.id}');return false">+ расход</a> · <a href="#" onclick="openForm('payment','${p.id}');return false">+ платёж</a> · <a href="#" onclick="openForm('invoice','${p.id}');return false">invoice</a><br><a href="#" onclick="openForm('project','${p.id}');return false">✎ Изменить</a> · <a href="#" style="color:#dc2626" onclick="deleteProject('${p.id}');return false">Удалить</a></div>`:''}</div><div class="right"><b>${money(m.final)}</b><div class="${cls}">${txt}</div></div></div>`}
+function renderTimeTracking(){let active=document.getElementById('activeClocks'),hist=document.getElementById('timeEntriesList');if(!active||!hist)return;let running=db.timeEntries.filter(x=>!x.end).slice().reverse();active.innerHTML=running.length?running.map(t=>`<div class="item"><div><div class="title">${esc(t.employeeName)}</div><div class="sub">${esc(t.projectName||'Без проекта')} • с ${new Date(t.start).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div></div><div class="right"><button class="danger" style="width:auto;padding:9px 12px;margin:0" onclick="clockOut('${t.id}')">Clock Out</button></div></div>`).join(''):'<div class="item"><div class="sub">Сейчас никто не Clocked In</div></div>';let done=db.timeEntries.filter(x=>x.end).slice().reverse().slice(0,8);hist.innerHTML=done.length?done.map(t=>`<div class="item"><div><div class="title">${esc(t.employeeName)}</div><div class="sub">${esc(t.projectName||'Без проекта')} • ${new Date(t.start).toLocaleDateString()}</div></div><div class="right"><b>${(+t.hours||0).toFixed(2)} h</b><div class="sub">${money((+t.hours||0)*(+t.rate||0))}</div></div></div>`).join(''):'<div class="item"><div class="sub">Пока нет завершённых смен</div></div>';if(db.employees.length){hist.innerHTML+=`<div class="item"><div><div class="title">Workers</div><div class="sub">${db.employees.map(e=>`${esc(e.name)} (${money(e.rate)}/h) <a href="#" style="color:#dc2626" onclick="deleteEmployee('${e.id}');return false">удалить</a>`).join('<br>')}</div></div></div>`}}
 function renderFinance(){
  let html='';
  if(financeTab==='expenses') html=db.expenses.slice().reverse().map(x=>`<div class="item"><div><div class="title">${esc(x.vendor||x.category)}</div><div class="sub">${esc(x.projectName||'Без проекта')} • ${esc(x.category||'')}</div></div><div class="right"><b>${money(x.amount)}</b></div></div>`).join('');
@@ -295,10 +328,10 @@ function printInvoice(id){let i=db.invoices.find(x=>x.id===id),t=invoiceTotal(i)
 function printEstimate(id){let e=db.estimates.find(x=>x.id===id);let total=(+e.qty||0)*(+e.price||0);let w=window.open('','_blank');w.document.write(docHTML('ESTIMATE',e.number,e.client,e.project,e.address,[{desc:e.desc,qty:e.qty,price:e.price,total}],`<b>TOTAL: ${money(total)}</b>`));w.document.close();w.focus();setTimeout(()=>w.print(),300)}
 function docHTML(kind,no,client,project,address,rows,footer){return `<!doctype html><html><head><meta name=viewport content="width=device-width"><style>body{font-family:-apple-system,Arial;padding:32px;color:#111}h1{color:#2563eb}table{width:100%;border-collapse:collapse;margin-top:25px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:right}th:first-child,td:first-child{text-align:left}.foot{text-align:right;margin-top:24px;line-height:1.7}</style></head><body><h1>MASTER BUILD</h1><h2>${kind}</h2><p>No. ${esc(no)}</p><p>Client: ${esc(client)}<br>Project: ${esc(project)}<br>Address: ${esc(address)}</p><table><tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr>${rows.map(r=>`<tr><td>${esc(r.desc)}</td><td>${r.qty}</td><td>${money(r.price)}</td><td>${money(r.total)}</td></tr>`).join('')}</table><div class=foot>${footer}</div></body></html>`}
 function renderChart(){let c=document.getElementById('chart');if(!c)return;let ctx=c.getContext('2d'),dpr=devicePixelRatio||1,w=c.clientWidth||680,h=180;c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);let months=Array.from({length:12},(_,m)=>{let rev=db.payments.filter(x=>new Date(x.date).getMonth()===m && new Date(x.date).getFullYear()===new Date().getFullYear()).reduce((s,x)=>s+(+x.amount||0),0);let cost=db.expenses.filter(x=>new Date(x.date).getMonth()===m && new Date(x.date).getFullYear()===new Date().getFullYear()).reduce((s,x)=>s+(+x.amount||0),0);return {rev,cost}});let max=Math.max(1,...months.flatMap(x=>[x.rev,x.cost]));ctx.font='10px -apple-system';ctx.fillStyle='#64748b';months.forEach((x,i)=>{let x0=10+i*(w-20)/12,bw=(w-20)/12*0.35;ctx.fillStyle='#93c5fd';ctx.fillRect(x0,h-20-(x.rev/max)*(h-40),bw,(x.rev/max)*(h-40));ctx.fillStyle='#cbd5e1';ctx.fillRect(x0+bw+2,h-20-(x.cost/max)*(h-40),bw,(x.cost/max)*(h-40));ctx.fillStyle='#64748b';ctx.fillText(String(i+1),x0,h-5)})}
-function renderAll(){let t=totals();for(const [id,v] of Object.entries({mRevenue:t.revenue,mCosts:t.costs,mProfit:t.profit,mAR:t.ar,mReserve:t.reserve,mNet:t.net,rRevenue:t.revenue,rCosts:t.costs,rProfit:t.profit,rReserve:t.reserve,rNet:t.net})){let el=document.getElementById(id);if(el)el.textContent=money(v)};recentProjects.innerHTML=db.projects.length?db.projects.slice().reverse().slice(0,5).map(p=>projectHTML(p)).join(''):'<div class="item"><div class="sub">Пока нет проектов</div></div>';renderProjects();renderFinance();renderDocs();renderChart()}
+function renderAll(){let t=totals();for(const [id,v] of Object.entries({mRevenue:t.revenue,mCosts:t.costs,mProfit:t.profit,mAR:t.ar,mReserve:t.reserve,mNet:t.net,rRevenue:t.revenue,rCosts:t.costs,rProfit:t.profit,rReserve:t.reserve,rNet:t.net})){let el=document.getElementById(id);if(el)el.textContent=money(v)};recentProjects.innerHTML=db.projects.length?db.projects.slice().reverse().slice(0,5).map(p=>projectHTML(p)).join(''):'<div class="item"><div class="sub">Пока нет проектов</div></div>';renderProjects();renderFinance();renderDocs();renderTimeTracking();renderChart()}
 
 function exportJSON(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`MasterBuild-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href)}
-function exportCSV(){let rows=[['Type','Date','Project','Name/Vendor','Category/Method','Amount']];db.expenses.forEach(x=>rows.push(['Expense',x.date,x.projectName,x.vendor,x.category,x.amount]));db.payments.forEach(x=>rows.push(['Payment',x.date,x.projectName,x.client,x.method,x.amount]));let csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MasterBuild-export.csv';a.click();URL.revokeObjectURL(a.href)}
+function exportCSV(){let rows=[['Type','Date','Project','Name/Vendor','Category/Method','Amount']];db.expenses.forEach(x=>rows.push(['Expense',x.date,x.projectName,x.vendor,x.category,x.amount]));db.payments.forEach(x=>rows.push(['Payment',x.date,x.projectName,x.client,x.method,x.amount]));db.labor.forEach(x=>rows.push(['Labor',x.date,x.projectName,x.worker,`${x.hours}h @ ${x.rate}`,Number(x.hours||0)*Number(x.rate||0)]));let csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MasterBuild-export.csv';a.click();URL.revokeObjectURL(a.href)}
 function importJSON(ev){let f=ev.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=Object.assign(structuredClone(emptyDB),JSON.parse(r.result));save();alert('Backup импортирован')}catch(e){alert('Неверный backup файл')}};r.readAsText(f)}
 
 if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}

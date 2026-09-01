@@ -1,9 +1,7 @@
-# Master Build PWA
-
-Files for GitHub Pages:
-- index.html
-- manifest.webmanifest
-- sw.js
-
-GitHub Pages setup:
-Settings → Pages → Deploy from a branch → main → /(root) → Save.
+# Master Build PWA v2
+Updates:
+- Project edit and delete.
+- Linked financial history is preserved when a project is deleted.
+- Workers.
+- Clock In / Clock Out.
+- Completed time automatically creates Labor cost for project profitability.
