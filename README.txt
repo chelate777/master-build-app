@@ -1,7 +1,4 @@
-# Master Build PWA v2
-Updates:
-- Project edit and delete.
-- Linked financial history is preserved when a project is deleted.
-- Workers.
-- Clock In / Clock Out.
-- Completed time automatically creates Labor cost for project profitability.
+# Master Build Modern v3
+Modern mobile-first redesign inspired by field-service/time-tracking UX patterns.
+Preserves existing local data and features.
+Includes project edit/delete, workers, Clock In/Out, labor cost, finance, documents, receipts and exports.
