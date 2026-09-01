@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Master Build"/>
+<meta name="theme-color" content="#0f172a"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<title>Master Build</title>
+<style>
+:root{
+  --bg:#f6f7fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;
+  --blue:#2563eb;--blue2:#1e3a8a;--green:#16a34a;--red:#dc2626;--amber:#d97706;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{min-height:100vh}
+.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:94px}
+.hero{padding:calc(env(safe-area-inset-top) + 18px) 18px 18px;background:linear-gradient(145deg,#0f172a,#1e3a8a);color:#fff;border-radius:0 0 26px 26px}
+.hero h1{margin:0;font-size:29px}.hero p{margin:5px 0 0;opacity:.8}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(15,23,42,.06)}
+.metric .label{font-size:12px;color:var(--muted)}.metric .value{font-size:23px;font-weight:800;margin-top:5px}
+.metric .small{font-size:11px;color:var(--muted);margin-top:3px}
+.full{grid-column:1/-1}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.action{border:0;border-radius:14px;padding:12px 6px;background:#eef2ff;color:#1e3a8a;font-weight:750;font-size:12px}
+.section{padding:0 16px 16px}.section h2{font-size:18px;margin:6px 0 10px}
+.list{background:#fff;border-radius:18px;padding:0 16px;box-shadow:0 2px 12px rgba(15,23,42,.05)}
+.item{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}.title{font-weight:750}.sub{font-size:12px;color:var(--muted);margin-top:4px}
+.right{text-align:right;white-space:nowrap}
+.badge{display:inline-block;font-size:11px;padding:5px 8px;border-radius:999px;font-weight:700;background:#ecfdf5;color:#166534;margin-top:5px}
+.badge.warn{background:#fff7ed;color:#9a3412}.badge.bad{background:#fef2f2;color:#991b1b}
+.screen{display:none}.screen.active{display:block}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:7px 8px calc(env(safe-area-inset-bottom) + 7px);z-index:5}
+.nav{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.nav button{border:0;background:transparent;color:var(--muted);font-size:10px;padding:7px 3px}.nav button.active{color:var(--blue);font-weight:800}
+.ico{display:block;font-size:20px;margin-bottom:2px}
+.fab{position:fixed;right:18px;bottom:98px;width:58px;height:58px;border-radius:50%;border:0;background:var(--blue);color:white;font-size:30px;box-shadow:0 10px 22px rgba(37,99,235,.35);z-index:4}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:flex-end;z-index:20}.modal.open{display:flex}
+.sheet{width:100%;background:#fff;border-radius:24px 24px 0 0;max-height:91vh;overflow:auto;padding:18px 18px calc(env(safe-area-inset-bottom) + 18px)}
+.sheet h3{margin:0 0 14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:12px;color:var(--muted)}
+input,select,textarea{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;margin:5px 0 10px;background:white}
+textarea{min-height:84px;resize:vertical}
+.primary,.secondary,.danger{width:100%;border:0;border-radius:14px;padding:14px;font-weight:800;font-size:15px}
+.primary{background:var(--blue);color:#fff}.secondary{background:#f1f5f9;color:#334155;margin-top:8px}.danger{background:#fef2f2;color:#991b1b;margin-top:8px}
+.toolbar{display:flex;gap:8px;overflow:auto;padding:0 16px 12px}
+.chip{border:1px solid #dbe3f0;background:#fff;border-radius:999px;padding:9px 12px;white-space:nowrap;font-size:12px}
+.chip.active{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe;font-weight:750}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
+.notice{font-size:12px;color:var(--muted);line-height:1.45}
+canvas{width:100%;height:180px;background:#fff;border-radius:14px}
+.preview{max-width:100%;max-height:260px;border-radius:14px;margin:8px 0}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.kv:last-child{border-bottom:0}
+@media(max-width:420px){.actions{grid-template-columns:1fr 1fr}.grid{gap:10px;padding:12px}.card{padding:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+<section id="home" class="screen active">
+  <div class="hero"><h1>Master Build</h1><p>Проекты, финансы и документы</p></div>
+  <div class="grid">
+    <div class="card metric"><div class="label">Получено</div><div id="mRevenue" class="value">$0</div></div>
+    <div class="card metric"><div class="label">Расходы</div><div id="mCosts" class="value">$0</div></div>
+    <div class="card metric"><div class="label">Cash Profit</div><div id="mProfit" class="value">$0</div></div>
+    <div class="card metric"><div class="label">К получению</div><div id="mAR" class="value">$0</div></div>
+    <div class="card metric"><div class="label">Резерв</div><div id="mReserve" class="value">$0</div><div class="small">по настройкам</div></div>
+    <div class="card metric"><div class="label">Оценка Net</div><div id="mNet" class="value">$0</div></div>
+    <div class="card full">
+      <div class="actions">
+        <button class="action" onclick="openForm('project')">+ Проект</button>
+        <button class="action" onclick="openForm('expense')">+ Расход</button>
+        <button class="action" onclick="openForm('payment')">+ Платёж</button>
+        <button class="action" onclick="openForm('receipt')">📷 Чек</button>
+      </div>
+    </div>
+  </div>
+  <div class="section"><h2>Последние проекты</h2><div id="recentProjects" class="list"></div></div>
+</section>
+
+<section id="projects" class="screen">
+  <div class="hero"><h1>Проекты</h1><p>Контракты, расходы и прибыльность</p></div>
+  <div class="toolbar" style="padding-top:14px"><button class="chip active" onclick="projectFilter='all';renderProjects()">Все</button><button class="chip" onclick="projectFilter='active';renderProjects()">В работе</button><button class="chip" onclick="projectFilter='completed';renderProjects()">Завершены</button></div>
+  <div class="section"><input id="projectSearch" placeholder="Поиск по клиенту, адресу или проекту" oninput="renderProjects()"><div id="projectsList" class="list"></div></div>
+</section>
+
+<section id="finance" class="screen">
+  <div class="hero"><h1>Финансы</h1><p>Расходы, платежи, labor и mileage</p></div>
+  <div class="toolbar" style="padding-top:14px">
+    <button class="chip active" onclick="financeTab='expenses';renderFinance()">Расходы</button>
+    <button class="chip" onclick="financeTab='payments';renderFinance()">Платежи</button>
+    <button class="chip" onclick="financeTab='labor';renderFinance()">Labor</button>
+    <button class="chip" onclick="financeTab='mileage';renderFinance()">Mileage</button>
+  </div>
+  <div class="section"><div id="financeList" class="list"></div></div>
+</section>
+
+<section id="docs" class="screen">
+  <div class="hero"><h1>Документы</h1><p>Estimates и Invoices</p></div>
+  <div class="grid">
+    <div class="card full"><div class="actions">
+      <button class="action" onclick="openForm('estimate')">+ Estimate</button>
+      <button class="action" onclick="openForm('invoice')">+ Invoice</button>
+      <button class="action" onclick="openForm('client')">+ Клиент</button>
+      <button class="action" onclick="openForm('sub')">+ Sub</button>
+    </div></div>
+  </div>
+  <div class="section"><h2>Invoices</h2><div id="invoiceList" class="list"></div></div>
+  <div class="section"><h2>Estimates</h2><div id="estimateList" class="list"></div></div>
+</section>
+
+<section id="more" class="screen">
+  <div class="hero"><h1>Ещё</h1><p>Отчёты, настройки и backup</p></div>
+  <div class="grid">
+    <div class="card full">
+      <div class="kv"><span>Revenue</span><b id="rRevenue">$0</b></div>
+      <div class="kv"><span>Costs</span><b id="rCosts">$0</b></div>
+      <div class="kv"><span>Profit</span><b id="rProfit">$0</b></div>
+      <div class="kv"><span>Reserve</span><b id="rReserve">$0</b></div>
+      <div class="kv"><span>Estimated Net</span><b id="rNet">$0</b></div>
+    </div>
+    <div class="card full"><canvas id="chart" width="680" height="180"></canvas></div>
+    <div class="card full">
+      <button class="secondary" onclick="openForm('settings')">Настройки бизнеса и резервов</button>
+      <button class="secondary" onclick="exportJSON()">Экспорт backup JSON</button>
+      <button class="secondary" onclick="exportCSV()">Экспорт CSV</button>
+      <button class="secondary" onclick="document.getElementById('importFile').click()">Импорт backup</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importJSON(event)">
+    </div>
+    <div class="card full notice">Данные хранятся локально на устройстве. Для надёжности регулярно делай backup. Налоговые, mileage и L&I ставки в настройках — плановые и должны обновляться вручную под актуальные правила.</div>
+  </div>
+</section>
+
+<button class="fab" onclick="openQuick()">+</button>
+</div>
+
+<div class="bottom"><div class="nav">
+<button class="active" onclick="showScreen('home',this)"><span class="ico">⌂</span>Главная</button>
+<button onclick="showScreen('projects',this)"><span class="ico">▣</span>Проекты</button>
+<button onclick="showScreen('finance',this)"><span class="ico">$</span>Финансы</button>
+<button onclick="showScreen('docs',this)"><span class="ico">▤</span>Документы</button>
+<button onclick="showScreen('more',this)"><span class="ico">•••</span>Ещё</button>
+</div></div>
+
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="sheet"><h3 id="formTitle">Добавить</h3><div id="formBody"></div></div></div>
+
+<script>
+const KEY='masterbuild_pwa_ultimate_v1';
+const emptyDB={projects:[],expenses:[],payments:[],labor:[],mileage:[],clients:[],subs:[],estimates:[],invoices:[],receipts:[],settings:{
+ company:'Master Build',phone:'',email:'',address:'',boReserve:0.015,federalReserve:0.20,liReserve:0.05,overheadReserve:0.10,mileageRate:0.70,salesTax:0
+}};
+let db=loadDB(), projectFilter='all', financeTab='expenses';
+
+function loadDB(){try{return Object.assign(structuredClone(emptyDB),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return structuredClone(emptyDB)}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function money(v){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(v||0))}
+function pct(v){return `${(Number(v||0)*100).toFixed(1)}%`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function uid(p='x'){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function byProject(arr,id){return arr.filter(x=>x.projectId===id)}
+function projectMetrics(p){
+ const paid=byProject(db.payments,p.id).reduce((s,x)=>s+Number(x.amount||0),0);
+ const exp=byProject(db.expenses,p.id).reduce((s,x)=>s+Number(x.amount||0),0);
+ const labor=byProject(db.labor,p.id).reduce((s,x)=>s+Number(x.hours||0)*Number(x.rate||0)*(1+Number(x.compRate||0)),0);
+ const final=Number(p.contract||0)+Number(p.changeOrders||0), cost=exp+labor, gp=final-cost;
+ return {paid,exp,labor,final,cost,gp,margin:final?gp/final:0,balance:final-paid};
+}
+function totals(){
+ const contract=db.projects.reduce((s,p)=>s+projectMetrics(p).final,0);
+ const revenue=db.payments.reduce((s,x)=>s+Number(x.amount||0),0);
+ const exp=db.expenses.reduce((s,x)=>s+Number(x.amount||0),0);
+ const lab=db.labor.reduce((s,x)=>s+Number(x.hours||0)*Number(x.rate||0)*(1+Number(x.compRate||0)),0);
+ const costs=exp+lab, profit=revenue-costs;
+ const reserve=Math.max(0,revenue)*Number(db.settings.boReserve||0)+Math.max(0,profit)*(Number(db.settings.federalReserve||0)+Number(db.settings.liReserve||0));
+ return {contract,revenue,costs,profit,reserve,net:profit-reserve,ar:Math.max(0,contract-revenue)};
+}
+function showScreen(id,btn){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderAll()}
+function closeModal(){modal.classList.remove('open')}
+function openQuick(){formTitle.textContent='Быстро добавить';formBody.innerHTML=`<button class="primary" onclick="openForm('project')">Новый проект</button><button class="secondary" onclick="openForm('expense')">Новый расход</button><button class="secondary" onclick="openForm('payment')">Новый платёж</button><button class="secondary" onclick="openForm('receipt')">Сфотографировать чек</button><button class="secondary" onclick="openForm('invoice')">Новый Invoice</button><button class="secondary" onclick="openForm('estimate')">Новый Estimate</button>`;modal.classList.add('open')}
+
+function projectOptions(selected=''){return `<option value="">Без проекта</option>`+db.projects.map(p=>`<option value="${p.id}" ${selected===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}
+function openForm(type,arg=''){
+ modal.classList.add('open');
+ if(type==='project'){
+  formTitle.textContent='Новый проект';formBody.innerHTML=`
+  <label>Название / адрес</label><input id="pName" placeholder="Smith Siding">
+  <label>Клиент</label><input id="pClient">
+  <label>Адрес</label><input id="pAddress">
+  <div class="row"><div><label>Contract</label><input id="pContract" type="number" inputmode="decimal"></div><div><label>Change Orders</label><input id="pCO" type="number" inputmode="decimal"></div></div>
+  <label>Статус</label><select id="pStatus"><option value="active">In Progress</option><option value="lead">Lead</option><option value="quoted">Quoted</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+  <button class="primary" onclick="addProject()">Сохранить</button><button class="secondary" onclick="closeModal()">Отмена</button>`;
+ } else if(type==='expense'){
+  formTitle.textContent='Новый расход';formBody.innerHTML=`
+  <label>Проект</label><select id="eProject">${projectOptions(arg)}</select>
+  <label>Vendor</label><input id="eVendor" placeholder="Home Depot">
+  <label>Категория</label><select id="eCat">${['Materials','Labor','Subcontractor','Equipment','Fuel','Tools','Dump Fees','Permit','Insurance','Office','Advertising','Other'].map(x=>`<option>${x}</option>`).join('')}</select>
+  <label>Описание</label><input id="eDesc">
+  <div class="row"><div><label>Сумма</label><input id="eAmount" type="number" inputmode="decimal"></div><div><label>Receipt #</label><input id="eReceipt"></div></div>
+  <button class="primary" onclick="addExpense()">Сохранить расход</button><button class="secondary" onclick="closeModal()">Отмена</button>`;
+ } else if(type==='payment'){
+  formTitle.textContent='Платёж клиента';formBody.innerHTML=`
+  <label>Проект</label><select id="payProject">${projectOptions(arg)}</select>
+  <label>Сумма</label><input id="payAmount" type="number" inputmode="decimal">
+  <label>Метод</label><select id="payMethod">${['Check','Zelle','Cash','Card','ACH','Other'].map(x=>`<option>${x}</option>`).join('')}</select>
+  <label>Check # / Transaction ID</label><input id="payRef">
+  <button class="primary" onclick="addPayment()">Сохранить платёж</button><button class="secondary" onclick="closeModal()">Отмена</button>`;
+ } else if(type==='labor'){
+  formTitle.textContent='Labor';formBody.innerHTML=`
+  <label>Проект</label><select id="lProject">${projectOptions(arg)}</select><label>Worker</label><input id="lWorker">
+  <div class="row"><div><label>Hours</label><input id="lHours" type="number" inputmode="decimal"></div><div><label>Hourly rate</label><input id="lRate" type="number" inputmode="decimal"></div></div>
+  <label>L&I reserve rate</label><input id="lComp" type="number" inputmode="decimal" placeholder="0.05">
+  <button class="primary" onclick="addLabor()">Сохранить Labor</button>`;
+ } else if(type==='mileage'){
+  formTitle.textContent='Mileage';formBody.innerHTML=`
+  <label>Проект</label><select id="mProject">${projectOptions(arg)}</select>
+  <div class="row"><div><label>Start odometer</label><input id="mStart" type="number" inputmode="decimal"></div><div><label>End odometer</label><input id="mEnd" type="number" inputmode="decimal"></div></div>
+  <label>Purpose</label><input id="mPurpose" value="Jobsite travel">
+  <button class="primary" onclick="addMileage()">Сохранить Mileage</button>`;
+ } else if(type==='receipt'){
+  formTitle.textContent='Фото чека';formBody.innerHTML=`
+  <label>Сфотографируй чек или выбери фото</label><input id="receiptFile" type="file" accept="image/*" capture="environment" onchange="previewReceipt(event)">
+  <img id="receiptPreview" class="preview" style="display:none">
+  <label>Vendor</label><input id="rVendor">
+  <label>Сумма</label><input id="rAmount" type="number" inputmode="decimal">
+  <label>Проект</label><select id="rProject">${projectOptions()}</select>
+  <button class="primary" onclick="saveReceipt()">Сохранить чек + расход</button>
+  <div class="notice">В браузерной версии автоматический OCR зависит от браузера. Фото сохраняется локально; vendor и сумму можно быстро ввести вручную.</div>`;
+ } else if(type==='estimate'){
+  formTitle.textContent='Новый Estimate';formBody.innerHTML=`
+  <label>Estimate #</label><input id="estNo" value="EST-${Date.now().toString().slice(-6)}"><label>Client</label><input id="estClient"><label>Project</label><input id="estProject"><label>Address</label><input id="estAddress">
+  <label>Description</label><input id="estDesc" value="Construction services">
+  <div class="row"><div><label>Qty</label><input id="estQty" type="number" value="1"></div><div><label>Unit Price</label><input id="estPrice" type="number" inputmode="decimal"></div></div>
+  <button class="primary" onclick="addEstimate()">Сохранить Estimate</button>`;
+ } else if(type==='invoice'){
+  let p=db.projects.find(x=>x.id===arg); formTitle.textContent='Новый Invoice';formBody.innerHTML=`
+  <label>Invoice #</label><input id="invNo" value="INV-${Date.now().toString().slice(-6)}"><label>Client</label><input id="invClient" value="${esc(p?.client||'')}"><label>Project</label><input id="invProject" value="${esc(p?.name||'')}"><label>Address</label><input id="invAddress" value="${esc(p?.address||'')}">
+  <label>Description</label><input id="invDesc" value="Construction services">
+  <div class="row"><div><label>Qty</label><input id="invQty" type="number" value="1"></div><div><label>Unit Price</label><input id="invPrice" type="number" value="${p?projectMetrics(p).final:''}"></div></div>
+  <div class="row"><div><label>Tax rate</label><input id="invTax" type="number" inputmode="decimal" value="${db.settings.salesTax||0}"></div><div><label>Deposit</label><input id="invDeposit" type="number" inputmode="decimal"></div></div>
+  <label>Due date</label><input id="invDue" type="date" value="${new Date(Date.now()+14*86400000).toISOString().slice(0,10)}">
+  <button class="primary" onclick="addInvoice()">Сохранить Invoice</button>`;
+ } else if(type==='client'){
+  formTitle.textContent='Новый клиент';formBody.innerHTML=`<label>Имя</label><input id="cName"><label>Phone</label><input id="cPhone"><label>Email</label><input id="cEmail"><label>Address</label><input id="cAddress"><button class="primary" onclick="addClient()">Сохранить клиента</button>`;
+ } else if(type==='sub'){
+  formTitle.textContent='Subcontractor';formBody.innerHTML=`<label>Name</label><input id="sName"><label>Company</label><input id="sCompany"><label>Email</label><input id="sEmail"><label>Phone</label><input id="sPhone"><label><input id="sW9" type="checkbox"> W-9 received</label><br><label><input id="sIns" type="checkbox"> Insurance on file</label><button class="primary" onclick="addSub()">Сохранить</button>`;
+ } else if(type==='settings'){
+  const s=db.settings;formTitle.textContent='Business Settings';formBody.innerHTML=`
+  <label>Company</label><input id="setCompany" value="${esc(s.company)}"><label>Phone</label><input id="setPhone" value="${esc(s.phone)}"><label>Email</label><input id="setEmail" value="${esc(s.email)}"><label>Address</label><input id="setAddress" value="${esc(s.address)}">
+  <div class="row"><div><label>B&O reserve</label><input id="setBO" type="number" value="${s.boReserve}"></div><div><label>Federal reserve</label><input id="setFed" type="number" value="${s.federalReserve}"></div></div>
+  <div class="row"><div><label>L&I reserve</label><input id="setLI" type="number" value="${s.liReserve}"></div><div><label>Overhead reserve</label><input id="setOH" type="number" value="${s.overheadReserve}"></div></div>
+  <div class="row"><div><label>Mileage rate</label><input id="setMileage" type="number" value="${s.mileageRate}"></div><div><label>Default sales tax</label><input id="setTax" type="number" value="${s.salesTax}"></div></div>
+  <button class="primary" onclick="saveSettings()">Сохранить настройки</button>`;
+ }
+}
+
+function addProject(){db.projects.push({id:uid('p'),name:pName.value.trim(),client:pClient.value.trim(),address:pAddress.value.trim(),contract:+pContract.value||0,changeOrders:+pCO.value||0,status:pStatus.value,date:new Date().toISOString()});closeModal();save()}
+function addExpense(){let p=db.projects.find(x=>x.id===eProject.value);db.expenses.push({id:uid('e'),date:new Date().toISOString(),projectId:eProject.value,projectName:p?.name||'',vendor:eVendor.value.trim(),category:eCat.value,desc:eDesc.value.trim(),amount:+eAmount.value||0,receipt:eReceipt.value.trim()});closeModal();save()}
+function addPayment(){let p=db.projects.find(x=>x.id===payProject.value);db.payments.push({id:uid('pay'),date:new Date().toISOString(),projectId:payProject.value,projectName:p?.name||'',client:p?.client||'',amount:+payAmount.value||0,method:payMethod.value,ref:payRef.value.trim()});closeModal();save()}
+function addLabor(){let p=db.projects.find(x=>x.id===lProject.value);db.labor.push({id:uid('l'),date:new Date().toISOString(),projectId:lProject.value,projectName:p?.name||'',worker:lWorker.value.trim(),hours:+lHours.value||0,rate:+lRate.value||0,compRate:+lComp.value||0});closeModal();save()}
+function addMileage(){let p=db.projects.find(x=>x.id===mProject.value);db.mileage.push({id:uid('m'),date:new Date().toISOString(),projectId:mProject.value,projectName:p?.name||'',start:+mStart.value||0,end:+mEnd.value||0,rate:+db.settings.mileageRate||0,purpose:mPurpose.value.trim()});closeModal();save()}
+let receiptData='';
+function previewReceipt(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{receiptData=r.result;receiptPreview.src=receiptData;receiptPreview.style.display='block'};r.readAsDataURL(f)}
+function saveReceipt(){let p=db.projects.find(x=>x.id===rProject.value);let rec={id:uid('r'),date:new Date().toISOString(),projectId:rProject.value,vendor:rVendor.value.trim(),amount:+rAmount.value||0,image:receiptData};db.receipts.push(rec);db.expenses.push({id:uid('e'),date:rec.date,projectId:rec.projectId,projectName:p?.name||'',vendor:rec.vendor,category:'Materials',desc:'Receipt photo',amount:rec.amount,receipt:rec.id});closeModal();save()}
+function addEstimate(){db.estimates.push({id:uid('est'),number:estNo.value,client:estClient.value,project:estProject.value,address:estAddress.value,desc:estDesc.value,qty:+estQty.value||1,price:+estPrice.value||0,date:new Date().toISOString(),status:'Draft'});closeModal();save()}
+function addInvoice(){db.invoices.push({id:uid('inv'),number:invNo.value,client:invClient.value,project:invProject.value,address:invAddress.value,desc:invDesc.value,qty:+invQty.value||1,price:+invPrice.value||0,tax:+invTax.value||0,deposit:+invDeposit.value||0,due:invDue.value,date:new Date().toISOString(),status:'Open'});closeModal();save()}
+function addClient(){db.clients.push({id:uid('c'),name:cName.value,phone:cPhone.value,email:cEmail.value,address:cAddress.value});closeModal();save()}
+function addSub(){db.subs.push({id:uid('s'),name:sName.value,company:sCompany.value,email:sEmail.value,phone:sPhone.value,w9:sW9.checked,insurance:sIns.checked,paidYTD:0,requires1099:true});closeModal();save()}
+function saveSettings(){db.settings={company:setCompany.value,phone:setPhone.value,email:setEmail.value,address:setAddress.value,boReserve:+setBO.value||0,federalReserve:+setFed.value||0,liReserve:+setLI.value||0,overheadReserve:+setOH.value||0,mileageRate:+setMileage.value||0,salesTax:+setTax.value||0};closeModal();save()}
+
+function renderProjects(){
+ let list=[...db.projects].reverse(), q=(document.getElementById('projectSearch')?.value||'').toLowerCase();
+ if(projectFilter==='active') list=list.filter(p=>p.status==='active'); if(projectFilter==='completed') list=list.filter(p=>p.status==='completed');
+ if(q)list=list.filter(p=>[p.name,p.client,p.address].some(v=>(v||'').toLowerCase().includes(q)));
+ projectsList.innerHTML=list.length?list.map(p=>projectHTML(p,true)).join(''):'<div class="item"><div class="sub">Пока нет проектов</div></div>';
+}
+function projectHTML(p,buttons=false){let m=projectMetrics(p);let cls=m.balance<=0?'badge':m.paid>0?'badge warn':'badge bad';let txt=m.balance<=0?'Оплачено':m.paid>0?'Частично':'Не оплачено';return `<div class="item"><div><div class="title">${esc(p.name)}</div><div class="sub">${esc(p.client||p.address||'')} • Margin ${pct(m.margin)} • Cost ${money(m.cost)}</div>${buttons?`<div class="sub"><a href="#" onclick="openForm('expense','${p.id}')">+ расход</a> · <a href="#" onclick="openForm('payment','${p.id}')">+ платёж</a> · <a href="#" onclick="openForm('invoice','${p.id}')">invoice</a></div>`:''}</div><div class="right"><b>${money(m.final)}</b><div class="${cls}">${txt}</div></div></div>`}
+function renderFinance(){
+ let html='';
+ if(financeTab==='expenses') html=db.expenses.slice().reverse().map(x=>`<div class="item"><div><div class="title">${esc(x.vendor||x.category)}</div><div class="sub">${esc(x.projectName||'Без проекта')} • ${esc(x.category||'')}</div></div><div class="right"><b>${money(x.amount)}</b></div></div>`).join('');
+ if(financeTab==='payments') html=db.payments.slice().reverse().map(x=>`<div class="item"><div><div class="title">${esc(x.projectName||'Платёж')}</div><div class="sub">${esc(x.method)} ${esc(x.ref||'')}</div></div><div class="right"><b>${money(x.amount)}</b></div></div>`).join('');
+ if(financeTab==='labor') html=db.labor.slice().reverse().map(x=>`<div class="item"><div><div class="title">${esc(x.worker)}</div><div class="sub">${esc(x.projectName)} • ${x.hours} h × ${money(x.rate)}</div></div><div class="right"><b>${money((+x.hours||0)*(+x.rate||0)*(1+(+x.compRate||0)))}</b></div></div>`).join('');
+ if(financeTab==='mileage') html=db.mileage.slice().reverse().map(x=>{let miles=Math.max(0,(+x.end||0)-(+x.start||0));return `<div class="item"><div><div class="title">${esc(x.projectName||'Mileage')}</div><div class="sub">${esc(x.purpose)}</div></div><div class="right"><b>${miles.toFixed(1)} mi</b><div class="sub">${money(miles*(+x.rate||0))}</div></div></div>`}).join('');
+ financeList.innerHTML=html||'<div class="item"><div class="sub">Пока нет записей</div></div>';
+}
+function invoiceTotal(i){let sub=(+i.qty||0)*(+i.price||0),tax=sub*(+i.tax||0);return {sub,tax,total:Math.max(0,sub+tax-(+i.deposit||0))}}
+function renderDocs(){
+ invoiceList.innerHTML=db.invoices.length?db.invoices.slice().reverse().map(i=>{let t=invoiceTotal(i);let overdue=i.due && new Date(i.due)<new Date() && i.status!=='Paid';return `<div class="item"><div><div class="title">${esc(i.number)} • ${esc(i.project)}</div><div class="sub">${esc(i.client)} • Due ${esc(i.due||'')}</div><div class="sub"><a href="#" onclick="printInvoice('${i.id}')">Open / PDF</a></div></div><div class="right"><b>${money(t.total)}</b><div class="badge ${overdue?'bad':''}">${overdue?'Overdue':esc(i.status)}</div></div></div>`}).join(''):'<div class="item"><div class="sub">Пока нет invoices</div></div>';
+ estimateList.innerHTML=db.estimates.length?db.estimates.slice().reverse().map(e=>`<div class="item"><div><div class="title">${esc(e.number)} • ${esc(e.project)}</div><div class="sub">${esc(e.client)}</div><div class="sub"><a href="#" onclick="printEstimate('${e.id}')">Open / PDF</a></div></div><div class="right"><b>${money((+e.qty||0)*(+e.price||0))}</b><div class="badge warn">${esc(e.status)}</div></div></div>`).join(''):'<div class="item"><div class="sub">Пока нет estimates</div></div>';
+}
+function printInvoice(id){let i=db.invoices.find(x=>x.id===id),t=invoiceTotal(i);let w=window.open('','_blank');w.document.write(docHTML('INVOICE',i.number,i.client,i.project,i.address,[{desc:i.desc,qty:i.qty,price:i.price,total:(+i.qty||0)*(+i.price||0)}],`Tax: ${money(t.tax)}<br>Deposit: ${money(i.deposit)}<br><b>BALANCE DUE: ${money(t.total)}</b><br>Due: ${esc(i.due)}`));w.document.close();w.focus();setTimeout(()=>w.print(),300)}
+function printEstimate(id){let e=db.estimates.find(x=>x.id===id);let total=(+e.qty||0)*(+e.price||0);let w=window.open('','_blank');w.document.write(docHTML('ESTIMATE',e.number,e.client,e.project,e.address,[{desc:e.desc,qty:e.qty,price:e.price,total}],`<b>TOTAL: ${money(total)}</b>`));w.document.close();w.focus();setTimeout(()=>w.print(),300)}
+function docHTML(kind,no,client,project,address,rows,footer){return `<!doctype html><html><head><meta name=viewport content="width=device-width"><style>body{font-family:-apple-system,Arial;padding:32px;color:#111}h1{color:#2563eb}table{width:100%;border-collapse:collapse;margin-top:25px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:right}th:first-child,td:first-child{text-align:left}.foot{text-align:right;margin-top:24px;line-height:1.7}</style></head><body><h1>MASTER BUILD</h1><h2>${kind}</h2><p>No. ${esc(no)}</p><p>Client: ${esc(client)}<br>Project: ${esc(project)}<br>Address: ${esc(address)}</p><table><tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr>${rows.map(r=>`<tr><td>${esc(r.desc)}</td><td>${r.qty}</td><td>${money(r.price)}</td><td>${money(r.total)}</td></tr>`).join('')}</table><div class=foot>${footer}</div></body></html>`}
+function renderChart(){let c=document.getElementById('chart');if(!c)return;let ctx=c.getContext('2d'),dpr=devicePixelRatio||1,w=c.clientWidth||680,h=180;c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);let months=Array.from({length:12},(_,m)=>{let rev=db.payments.filter(x=>new Date(x.date).getMonth()===m && new Date(x.date).getFullYear()===new Date().getFullYear()).reduce((s,x)=>s+(+x.amount||0),0);let cost=db.expenses.filter(x=>new Date(x.date).getMonth()===m && new Date(x.date).getFullYear()===new Date().getFullYear()).reduce((s,x)=>s+(+x.amount||0),0);return {rev,cost}});let max=Math.max(1,...months.flatMap(x=>[x.rev,x.cost]));ctx.font='10px -apple-system';ctx.fillStyle='#64748b';months.forEach((x,i)=>{let x0=10+i*(w-20)/12,bw=(w-20)/12*0.35;ctx.fillStyle='#93c5fd';ctx.fillRect(x0,h-20-(x.rev/max)*(h-40),bw,(x.rev/max)*(h-40));ctx.fillStyle='#cbd5e1';ctx.fillRect(x0+bw+2,h-20-(x.cost/max)*(h-40),bw,(x.cost/max)*(h-40));ctx.fillStyle='#64748b';ctx.fillText(String(i+1),x0,h-5)})}
+function renderAll(){let t=totals();for(const [id,v] of Object.entries({mRevenue:t.revenue,mCosts:t.costs,mProfit:t.profit,mAR:t.ar,mReserve:t.reserve,mNet:t.net,rRevenue:t.revenue,rCosts:t.costs,rProfit:t.profit,rReserve:t.reserve,rNet:t.net})){let el=document.getElementById(id);if(el)el.textContent=money(v)};recentProjects.innerHTML=db.projects.length?db.projects.slice().reverse().slice(0,5).map(p=>projectHTML(p)).join(''):'<div class="item"><div class="sub">Пока нет проектов</div></div>';renderProjects();renderFinance();renderDocs();renderChart()}
+
+function exportJSON(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`MasterBuild-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href)}
+function exportCSV(){let rows=[['Type','Date','Project','Name/Vendor','Category/Method','Amount']];db.expenses.forEach(x=>rows.push(['Expense',x.date,x.projectName,x.vendor,x.category,x.amount]));db.payments.forEach(x=>rows.push(['Payment',x.date,x.projectName,x.client,x.method,x.amount]));let csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MasterBuild-export.csv';a.click();URL.revokeObjectURL(a.href)}
+function importJSON(ev){let f=ev.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=Object.assign(structuredClone(emptyDB),JSON.parse(r.result));save();alert('Backup импортирован')}catch(e){alert('Неверный backup файл')}};r.readAsText(f)}
+
+if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+renderAll();
+</script>
+</body>
+</html>
